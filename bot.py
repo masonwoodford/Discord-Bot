@@ -25,6 +25,7 @@ async def on_ready():
                       5 : '', 6 : '', 7 : '', 8 : '', 9: ''}
     global possiblePositions
     possiblePositions = [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
     print(f'{bot.user.name} has successfully connected to the server')
 
 async def updateAndSendBoard(ctx):
@@ -127,26 +128,20 @@ async def AI(ctx):
         await tieGame(ctx)
         return
     await ctx.send("Thinking...")
-    await asyncio.sleep(1.5)
+    await asyncio.sleep(1.3)
     bestScore = float('-inf')
     choice = -1
-    tempPos = -1
-    possiblePosCopy = possiblePositions[:]
-    i = len(possiblePosCopy) - 1
-    while(i > 0):
-        if userTeam[ctx.author] == 'X':
-            boardPositions[possiblePosCopy[i]] = 'O'
-        elif userTeam[ctx.author] == 'O':
-            boardPositions[possiblePosCopy[i]] = 'X'
-        tempPos = possiblePosCopy.pop()
-        score = await miniMax(0, False, possiblePosCopy, ctx)
-        boardPositions[tempPos] = ''
-        if score > bestScore:
-            bestScore = score
-            choice = tempPos
-        i -= 1
-
-
+    for i in range(1, 10):
+        if boardPositions[i] == '':
+            if userTeam[ctx.author] == 'X':
+                boardPositions[i] = 'O'
+            elif userTeam[ctx.author] == 'O':
+                boardPositions[i] = 'X'
+            score = await miniMax(0, False, ctx)
+            boardPositions[i] = ''
+            if score > bestScore:
+                bestScore = score
+                choice = i
     possiblePositions.remove(choice)
     if userTeam[ctx.author] == 'X':
         boardPositions[choice] = 'O'
@@ -158,48 +153,46 @@ async def AI(ctx):
         await ctx.send("Game Over!")
 
 
-async def miniMax(depth, isMaximizing, possiblePosCopy, ctx):
-    if (await hasWon() == 'O'):
-        score = -1
-        return score
-    elif (await hasWon() == 'X'):
-        score = 1
-        return score
-    elif (len(possiblePosCopy) == 1):
+async def miniMax(depth, isMaximizing, ctx):
+    notTie = True
+    for value in boardPositions.values():
+        if value == '':
+            notTie = False
+    if notTie == True:
         score = 0
         return score
+    outcome = await hasWon()
+    if (outcome == 'O'):
+        score = -10
+        return score
+    elif (outcome == 'X'):
+        score = 10
+        return score
+
     if isMaximizing:
-        i = len(possiblePosCopy) - 1
         bestScore = float('-inf')
-        while (i > 0):
-            if userTeam[ctx.author] == 'X':
-                boardPositions[possiblePosCopy[i]] = 'O'
-            elif userTeam[ctx.author] == 'O':
-                boardPositions[possiblePosCopy[i]] = 'X'
-            tempPos = possiblePosCopy.pop()
-            score = await miniMax(depth+1, False, possiblePosCopy, ctx)
-            possiblePosCopy.append(tempPos)
-            boardPositions[tempPos] = ''
-            bestScore = max(score, bestScore)
-            i -= 1
+        for i in range(1, 10):
+            if boardPositions[i] == '':
+                if userTeam[ctx.author] == 'X':
+                    boardPositions[i] = 'O'
+                elif userTeam[ctx.author] == 'O':
+                    boardPositions[i] = 'X'
+                score = await miniMax(depth+1, False, ctx)
+                boardPositions[i] = ''
+                bestScore = max(score, bestScore)
         return bestScore
     else:
-        i = len(possiblePosCopy) - 1
         bestScore = float('inf')
-        while (i > 0):
-            if userTeam[ctx.author] == 'X':
-                boardPositions[possiblePosCopy[i]] = 'X'
-            elif userTeam[ctx.author] == 'O':
-                boardPositions[possiblePosCopy[i]] = 'O'
-            tempPos = possiblePosCopy.pop()
-            score = await miniMax(depth+1, True, possiblePosCopy, ctx)
-            possiblePosCopy.append(tempPos)
-            boardPositions[tempPos] = ''
-            bestScore = min(score, bestScore)
-            i -= 1
+        for i in range(1, 10):
+            if boardPositions[i] == '':
+                if userTeam[ctx.author] == 'X':
+                    boardPositions[i] = 'X'
+                elif userTeam[ctx.author] == 'O':
+                    boardPositions[i] = 'O'
+                score = await miniMax(depth+1, True, ctx)
+                boardPositions[i] = ''
+                bestScore = min(score, bestScore)
         return bestScore
-
-
 
 async def resetGame():
     global gameStarted
@@ -251,14 +244,15 @@ async def generateText(ctx, arg = None):
     if arg == None:
         await ctx.send("You need to specify your team")
         return
-    await updateAndSendBoard(ctx)
     if (gameStarted == False and (arg == "o" or arg == "O")):
         gameStarted = True
+        await updateAndSendBoard(ctx)
         prompt = "Tic-tac-toe game started! O chosen!"
         userTeam = {ctx.author:'O'}
         await ctx.send(prompt)
     elif gameStarted == False and (arg == "x" or arg == "X"):
         gameStarted = True
+        await updateAndSendBoard(ctx)
         prompt = "Tic-tac-toe game started! X chosen!"
         userTeam = {ctx.author:'X'}
         await ctx.send(prompt)
@@ -272,7 +266,6 @@ async def generateText(ctx, arg = None):
     global boardPositions
     global board
     global possiblePositions
-    global hasP1Won
     if (gameStarted == False):
         await ctx.send("Game has not started yet")
         return
@@ -289,9 +282,9 @@ async def generateText(ctx, arg = None):
             boardPositions[arg] = 'O'
             possiblePositions.remove(arg)
             await updateAndSendBoard(ctx)
-            if await hasWon() != False:
+            if await hasWon() == 'O':
                 await resetGame()
-                await ctx.send("Game Over!")
+                await ctx.send("You win!")
                 return
             if len(possiblePositions) == 1:
                 await tieGame(ctx)
@@ -304,9 +297,9 @@ async def generateText(ctx, arg = None):
             boardPositions[arg] = 'X'
             possiblePositions.remove(arg)
             await updateAndSendBoard(ctx)
-            if await hasWon() != False:
+            if await hasWon() == 'X':
                 await resetGame()
-                await ctx.send("Game Over!")
+                await ctx.send("You win!")
                 return
             if len(possiblePositions) == 1:
                 await tieGame(ctx)
