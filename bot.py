@@ -154,13 +154,6 @@ async def AI(ctx):
 
 
 async def miniMax(depth, isMaximizing, ctx):
-    notTie = True
-    for value in boardPositions.values():
-        if value == '':
-            notTie = False
-    if notTie == True:
-        score = 0
-        return score
     outcome = await hasWon()
     if (outcome == 'O'):
         score = -10
@@ -168,7 +161,13 @@ async def miniMax(depth, isMaximizing, ctx):
     elif (outcome == 'X'):
         score = 10
         return score
-
+    notTie = True
+    for value in boardPositions.values():
+        if value == '':
+            notTie = False
+    if notTie == True and outcome == False:
+        score = 0
+        return score
     if isMaximizing:
         bestScore = float('-inf')
         for i in range(1, 10):
