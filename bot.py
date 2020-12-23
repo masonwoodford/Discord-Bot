@@ -47,25 +47,25 @@ async def checkRows():
         row.append(boardPositions[i])
     if len(set(row)) == 1:
         if boardPositions[1] == 'O':
-            return True
+            return 'O'
         elif boardPositions[1] == 'X':
-            return True
+            return 'X'
     row.clear()
     for i in range(4,7):
         row.append(boardPositions[i])
     if len(set(row)) == 1:
         if boardPositions[4] == 'O':
-            return True
+            return 'O'
         elif boardPositions[4] == 'X':
-            return True
+            return 'X'
     row.clear()
     for i in range(7,10):
         row.append(boardPositions[i])
     if len(set(row)) == 1:
         if boardPositions[7] == 'O':
-            return True
+            return 'O'
         elif boardPositions[7] == 'X':
-            return True
+            return 'X'
     row.clear()
     return False
 
@@ -75,25 +75,25 @@ async def checkCols():
         col.append(boardPositions[i])
     if len(set(col)) == 1:
         if boardPositions[1] == 'O':
-            return True
+            return 'O'
         elif boardPositions[1] == 'X':
-            return True
+            return 'X'
     col.clear()
     for i in range(2, 9, 3):
         col.append(boardPositions[i])
     if len(set(col)) == 1:
         if boardPositions[2] == 'O':
-            return True
+            return 'O'
         elif boardPositions[2] == 'X':
-            return True
+            return 'X'
     col.clear()
     for i in range(3, 10, 3):
         col.append(boardPositions[i])
     if len(set(col)) == 1:
         if boardPositions[3] == 'O':
-            return True
+            return 'O'
         elif boardPositions[3] == 'X':
-            return True
+            return 'X'
     col.clear()
     return False
 
@@ -103,19 +103,19 @@ async def checkDiags():
     diag.append(boardPositions[5])
     diag.append(boardPositions[9])
     if len(set(diag)) == 1:
-        if boardPositions[1] == '0':
-            return True
+        if boardPositions[1] == 'O':
+            return 'O'
         elif boardPositions[1] == 'X':
-            return True
+            return 'X'
     diag.clear()
     diag.append(boardPositions[3])
     diag.append(boardPositions[5])
     diag.append(boardPositions[7])
     if len(set(diag)) == 1:
-        if boardPositions[3] == '0':
-            return True
+        if boardPositions[3] == 'O':
+            return 'O'
         elif boardPositions[3] == 'X':
-            return True
+            return 'X'
     diag.clear()
     return False
 
@@ -128,14 +128,78 @@ async def AI(ctx):
         return
     await ctx.send("Thinking...")
     await asyncio.sleep(1.5)
-    choice = random.choice(possiblePositions[1:])
+    bestScore = float('-inf')
+    choice = -1
+    tempPos = -1
+    possiblePosCopy = possiblePositions[:]
+    i = len(possiblePosCopy) - 1
+    while(i > 0):
+        if userTeam[ctx.author] == 'X':
+            boardPositions[possiblePosCopy[i]] = 'O'
+        elif userTeam[ctx.author] == 'O':
+            boardPositions[possiblePosCopy[i]] = 'X'
+        tempPos = possiblePosCopy.pop()
+        score = await miniMax(0, False, possiblePosCopy, ctx)
+        boardPositions[tempPos] = ''
+        if score > bestScore:
+            bestScore = score
+            choice = tempPos
+        i -= 1
+
+
     possiblePositions.remove(choice)
     if userTeam[ctx.author] == 'X':
         boardPositions[choice] = 'O'
     elif userTeam[ctx.author] == 'O':
         boardPositions[choice] = 'X'
     await updateAndSendBoard(ctx)
-    await hasWon(ctx)
+    if (await hasWon() != False):
+        await resetGame()
+        await ctx.send("Game Over!")
+
+
+async def miniMax(depth, isMaximizing, possiblePosCopy, ctx):
+    if (await hasWon() == 'O'):
+        score = -1
+        return score
+    elif (await hasWon() == 'X'):
+        score = 1
+        return score
+    elif (len(possiblePosCopy) == 1):
+        score = 0
+        return score
+    if isMaximizing:
+        i = len(possiblePosCopy) - 1
+        bestScore = float('-inf')
+        while (i > 0):
+            if userTeam[ctx.author] == 'X':
+                boardPositions[possiblePosCopy[i]] = 'O'
+            elif userTeam[ctx.author] == 'O':
+                boardPositions[possiblePosCopy[i]] = 'X'
+            tempPos = possiblePosCopy.pop()
+            score = await miniMax(depth+1, False, possiblePosCopy, ctx)
+            possiblePosCopy.append(tempPos)
+            boardPositions[tempPos] = ''
+            bestScore = max(score, bestScore)
+            i -= 1
+        return bestScore
+    else:
+        i = len(possiblePosCopy) - 1
+        bestScore = float('inf')
+        while (i > 0):
+            if userTeam[ctx.author] == 'X':
+                boardPositions[possiblePosCopy[i]] = 'X'
+            elif userTeam[ctx.author] == 'O':
+                boardPositions[possiblePosCopy[i]] = 'O'
+            tempPos = possiblePosCopy.pop()
+            score = await miniMax(depth+1, True, possiblePosCopy, ctx)
+            possiblePosCopy.append(tempPos)
+            boardPositions[tempPos] = ''
+            bestScore = min(score, bestScore)
+            i -= 1
+        return bestScore
+
+
 
 async def resetGame():
     global gameStarted
@@ -155,11 +219,13 @@ async def tieGame(ctx):
     await resetGame()
     await ctx.send("Cat's Game!")
 
-async def hasWon(ctx):
-    if await checkCols() == True or await checkRows() == True or await checkDiags() == True:
-        await resetGame()
-        await ctx.send("Game over!")
-        return True
+async def hasWon():
+    if await checkCols() == 'O' or await checkRows() == 'O' or await checkDiags() == 'O':
+        return 'O'
+    elif await checkCols() == 'X' or await checkRows() == 'X' or await checkDiags() == 'X':
+        return 'X'
+    else:
+        return False
 
 
 @bot.event
@@ -223,7 +289,9 @@ async def generateText(ctx, arg = None):
             boardPositions[arg] = 'O'
             possiblePositions.remove(arg)
             await updateAndSendBoard(ctx)
-            if await hasWon(ctx) == True:
+            if await hasWon() != False:
+                await resetGame()
+                await ctx.send("Game Over!")
                 return
             if len(possiblePositions) == 1:
                 await tieGame(ctx)
@@ -236,7 +304,9 @@ async def generateText(ctx, arg = None):
             boardPositions[arg] = 'X'
             possiblePositions.remove(arg)
             await updateAndSendBoard(ctx)
-            if await hasWon(ctx) == True:
+            if await hasWon() != False:
+                await resetGame()
+                await ctx.send("Game Over!")
                 return
             if len(possiblePositions) == 1:
                 await tieGame(ctx)
