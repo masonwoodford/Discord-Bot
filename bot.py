@@ -10,10 +10,6 @@ TOKEN = os.environ['DISCORD_TOKEN']
 
 bot = commands.Bot(command_prefix='!')
 
-#@client.event
-#async def on_ready():
-#    print(f'{client.user.name} has successfully connected to the server')
-
 @bot.event
 async def on_ready():
     global gameStarted
@@ -38,10 +34,6 @@ async def updateAndSendBoard(ctx):
             f'----------\n'
     await ctx.send(board)
 
-#@bot.event
-#async def on_message(message):
-#    print(message.content)
-
 @bot.event
 async def on_member_join(member):
     print("hello")
@@ -55,11 +47,17 @@ async def generateText(ctx):
     await ctx.send("Stack Overflow :(")
 
 @bot.command(name='tictac', help="Plays tic tac toe")
-async def generateText(ctx, arg):
+async def generateText(ctx, arg = None):
     global gameStarted
     global board
     global playerChosen
     global userTeam
+    if (gameStarted == True):
+        await ctx.send("Error: game already in progress")
+        return
+    if arg == None:
+        await ctx.send("You need to specify your team")
+        return
     board = f'----------\n' \
             f'| {boardPositions[1]}   | {boardPositions[2]}   |  {boardPositions[3]}  |\n' \
             f'----------\n' \
@@ -81,72 +79,25 @@ async def generateText(ctx, arg):
         await ctx.send("Error starting game, check the command")
 
 @bot.command(name = 'place')
-async def generateText(ctx, arg):
+async def generateText(ctx, arg = None):
     global gameStarted
     global userTeam
     global boardPositions
     global board
-
+    if arg == None:
+        await ctx.send("Need placement position")
+        return
+    position = ord(arg)
+    if position < 49 or position > 57:
+        await ctx.send("Invalid position")
+        return
+    arg = int(arg)
     if (gameStarted and userTeam[ctx.author] == 'CIRCLE'):
-        if (arg == '1'):
-            boardPositions[1] = 'O'
-            await updateAndSendBoard(ctx)
-        elif (arg == '2'):
-            boardPositions[2] = 'O'
-            await updateAndSendBoard(ctx)
-        elif (arg == '3'):
-            boardPositions[3] = 'O'
-            await updateAndSendBoard(ctx)
-        elif (arg == '4'):
-            boardPositions[4] = 'O'
-            await updateAndSendBoard(ctx)
-        elif (arg == '5'):
-            boardPositions[5] = 'O'
-            await updateAndSendBoard(ctx)
-        elif (arg == '6'):
-            boardPositions[6] = 'O'
-            await updateAndSendBoard(ctx)
-        elif (arg == '7'):
-            boardPositions[7] = 'O'
-            await updateAndSendBoard(ctx)
-        elif (arg == '8'):
-            boardPositions[8] = 'O'
-            await updateAndSendBoard(ctx)
-        elif (arg == '9'):
-            boardPositions[9] = 'O'
-            await updateAndSendBoard(ctx)
-        else:
-            await ctx.send("Invalid placement")
+        boardPositions[arg] = 'O'
+        await updateAndSendBoard(ctx)
     elif gameStarted and userTeam[ctx.author] == 'X':
-        if (arg == '1'):
-            boardPositions[1] = 'X'
-            await updateAndSendBoard(ctx)
-        elif (arg == '2'):
-            boardPositions[2] = 'X'
-            await updateAndSendBoard(ctx)
-        elif (arg == '3'):
-            boardPositions[3] = 'X'
-            await updateAndSendBoard(ctx)
-        elif (arg == '4'):
-            boardPositions[4] = 'X'
-            await updateAndSendBoard(ctx)
-        elif (arg == '5'):
-            boardPositions[5] = 'X'
-            await updateAndSendBoard(ctx)
-        elif (arg == '6'):
-            boardPositions[6] = 'X'
-            await updateAndSendBoard(ctx)
-        elif (arg == '7'):
-            boardPositions[7] = 'X'
-            await updateAndSendBoard(ctx)
-        elif (arg == '8'):
-            boardPositions[8] = 'X'
-            await updateAndSendBoard(ctx)
-        elif (arg == '9'):
-            boardPositions[9] = 'X'
-            await updateAndSendBoard(ctx)
-        else:
-            await ctx.send("Invalid placement")
+        boardPositions[arg] = 'X'
+        await updateAndSendBoard(ctx)
     else:
         await ctx.send("Game has not started yet")
 
@@ -156,6 +107,4 @@ async def printTest(ctx):
     global userTeam
     print(userTeam[ctx.author])
 
-
-#client.run(TOKEN)
 bot.run(TOKEN)
