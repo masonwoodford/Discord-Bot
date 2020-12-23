@@ -2,7 +2,8 @@ import os
 import discord
 
 client = discord.Client()
-id = client.get_guild('GUILD_TOKEN')
+guild_token = os.environ['GUILD_TOKEN']
+id = client.get_guild(guild_token)
 TOKEN = os.environ['DISCORD_TOKEN']
 
 @client.event
