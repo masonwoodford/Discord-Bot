@@ -231,7 +231,7 @@ async def on_member_join(member):
 async def generateText(ctx):
     await ctx.send("Stack Overflow :(")
 
-@bot.command(name='tictac', help="Plays tic tac toe")
+@bot.command(name='tictac', help="Use !tictac x or !tictac o to start a game")
 async def generateText(ctx, arg = None):
     global gameStarted
     global board
@@ -258,7 +258,7 @@ async def generateText(ctx, arg = None):
     else:
         await ctx.send("Error starting game, check the command")
 
-@bot.command(name = 'place')
+@bot.command(name = 'place', help='Use !place 1-9 to place a piece')
 async def generateText(ctx, arg = None):
     global gameStarted
     global userTeam
@@ -310,14 +310,9 @@ async def generateText(ctx, arg = None):
     else:
         await ctx.send("Error, report bug please")
 
-@bot.command(name = "stop")
+@bot.command(name = "stop", help = "Ends the current game")
 async def generateText(ctx):
     await resetGame()
     await ctx.send("Game was ended")
-
-@bot.command(name = 'test')
-async def printTest(ctx):
-    global userTeam
-    print(userTeam[ctx.author])
 
 bot.run(TOKEN)
