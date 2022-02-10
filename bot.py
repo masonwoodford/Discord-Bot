@@ -136,7 +136,7 @@ async def AI(ctx):
                 board.boardPositions[i] = 'O'
             elif board.userTeam[ctx.author] == 'O':
                 board.boardPositions[i] = 'X'
-            score = miniMax(0, False, ctx)
+            score = miniMax(False, ctx)
             board.boardPositions[i] = ''
             if score > bestScore:
                 bestScore = score
@@ -152,21 +152,18 @@ async def AI(ctx):
         await ctx.send("Game Over!")
 
 
-def miniMax(depth, isMaximizing, ctx):
+def miniMax(isMaximizing, ctx):
     outcome = hasWon()
     if (outcome == 'O'):
-        score = -10
-        return score
+        return -10
     elif (outcome == 'X'):
-        score = 10
-        return score
+        return 10
     notTie = True
     for value in board.boardPositions.values():
         if value == '':
             notTie = False
     if notTie == True and outcome == False:
-        score = 0
-        return score
+        return 0
     if isMaximizing:
         bestScore = float('-inf')
         for i in range(1, 10):
@@ -175,7 +172,7 @@ def miniMax(depth, isMaximizing, ctx):
                     board.boardPositions[i] = 'O'
                 elif board.userTeam[ctx.author] == 'O':
                     board.boardPositions[i] = 'X'
-                score = miniMax(depth+1, False, ctx)
+                score = miniMax(False, ctx)
                 board.boardPositions[i] = ''
                 bestScore = max(score, bestScore)
         return bestScore
@@ -187,7 +184,7 @@ def miniMax(depth, isMaximizing, ctx):
                     board.boardPositions[i] = 'X'
                 elif board.userTeam[ctx.author] == 'O':
                     board.boardPositions[i] = 'O'
-                score = miniMax(depth+1, True, ctx)
+                score = miniMax(True, ctx)
                 board.boardPositions[i] = ''
                 bestScore = min(score, bestScore)
         return bestScore
@@ -204,6 +201,9 @@ def hasWon():
     else:
         return False
 
+@bot.command(name='error', help='Sends error message')
+async def generateText(ctx):
+    await ctx.send("Stack Overflow :(")
 
 @bot.event
 async def on_member_join(member):
@@ -211,10 +211,6 @@ async def on_member_join(member):
     await member.dm_channel.send(
         f'Welcome {member.name} to this Discord server!'
     )
-
-@bot.command(name='error', help='Sends error message')
-async def generateText(ctx):
-    await ctx.send("Stack Overflow :(")
 
 @bot.command(name='tictac', help="Use !tictac x or !tictac o to start a game")
 async def generateText(ctx, arg = None):
@@ -280,7 +276,6 @@ async def generateText(ctx, arg = None):
                 await tieGame(ctx)
                 return
             await AI(ctx)
-
         else:
             await ctx.send("Space already taken")
     else:
